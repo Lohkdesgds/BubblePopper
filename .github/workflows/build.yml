@@ -6,23 +6,26 @@ on:
   pull_request:
     branches: [main, master]
 
-
 jobs:
   build:
     strategy:
+      max-parallel: 1
       matrix:
-        os: [ windows-latest, ubuntu-latest ]
+        os: [ubuntu-latest, windows-latest]
+
     runs-on: ${{ matrix.os }}
+
     steps:
-        
-#      - if: matrix.os == 'ubuntu-latest'
-#        run: |
-#            echo "On linux, installing dependencies for CMake project"
-#            sudo apt install libxrandr-dev libxcursor-dev libxi-dev libudev-dev libflac-dev libvorbis-dev libgl1-mesa-dev libegl1-mesa-dev libdrm-dev libgbm-dev libfreetype-dev
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up CMake
+        uses: lukka/get-cmake@v4.0.3
+
+      - name: Configure CMake
+        run: cmake -S . -B build -G Ninja -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        uses: LunarisLib/actions/CMake@experimental
-        with:
-          checkout: 'true'
-          artifact_name: ${{ matrix.os }}_PROJECT
-          add_libraries_to_path: 'false'
+        run: cmake --build build --config Release
