@@ -6,7 +6,7 @@ on:
 
 jobs:
     ubuntu_build:
-        name: Ubuntu tests
+        name: Ubuntu build
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -37,8 +37,8 @@ jobs:
                 name: BubblePopper-UBUNTU
                 path: |
                     build/main/
+
     windows_build:
-        needs: ubuntu_build        
         name: Windows build
         runs-on: windows-latest
         steps:
@@ -49,6 +49,7 @@ jobs:
                   fetch-depth: 1
 
             - uses: msys2/setup-msys2@v2
+            
             - name: Setup
               shell: msys2 {0}
               run: |
@@ -57,7 +58,7 @@ jobs:
             - name: Configure
               shell: msys2 {0}
               run: |
-                  cmake -S . -B build -G Ninja -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_BUILD_TYPE=Release
+                  cmake -S . -B build -G Ninja -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_FIND_LIBRARY_SUFFIXES=".a"
             - name: Build
               shell: msys2 {0}
               run: |
