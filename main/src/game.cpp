@@ -16,7 +16,9 @@ Game::~Game() {
 void Game::run() {
     // Main game loop would go here
 
-    while(*m_display) {
+    const auto last_time = al_get_time();
+
+    while(*m_display && al_get_time() - last_time < 10.0) {
         ALLEGRO_COLOR rainbow_by_time = al_map_rgb(
             120 + cos(al_get_time() * 2) * 100,
             120 + cos(al_get_time() * 1.3 + 2) * 100,

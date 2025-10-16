@@ -29,12 +29,26 @@ Display::Display(int width, int height, bool fullscreen, bool vsync) {
     al_init_user_event_source(&m_custom_stop_event);
     al_register_event_source(m_event_queue, &m_custom_stop_event);
     
-    m_event_thread = std::jthread(&Display::handle_events, this);
+    m_event_thread = std::thread(&Display::handle_events, this);
 
 }
 
 Display::~Display() {
-    destroy();
+    signal_stop();
+
+    m_event_thread.join();
+
+    if (m_event_queue) {
+        al_destroy_event_queue(m_event_queue);
+        m_event_queue = nullptr;
+    }
+
+    al_destroy_user_event_source(&m_custom_stop_event);
+
+    if (m_display) {
+        al_destroy_display(m_display);
+        m_display = nullptr;
+    }
 }
 
 
@@ -70,7 +84,7 @@ bool Display::is_fullscreen() const
 }
 
 Display::operator bool() const {
-    return m_display != nullptr;
+    return !m_closed;
 }
 
 void Display::handle_events() {
@@ -79,7 +93,7 @@ void Display::handle_events() {
         if (al_wait_for_event_timed(m_event_queue, &event, 0.1)) {
             switch (event.type) {
             case ALLEGRO_EVENT_DISPLAY_CLOSE:
-                destroy();
+                m_closed = true;
                 return;
             case ALLEGRO_EVENT_DISPLAY_RESIZE:
                 al_acknowledge_resize(m_display);
@@ -97,24 +111,4 @@ void Display::signal_stop() {
     ALLEGRO_EVENT ev;
     ev.user.type = ALLEGRO_EVENT_DISPLAY_CLOSE;
     al_emit_user_event(&m_custom_stop_event, &ev, nullptr);
-}
-
-
-
-void Display::destroy() {
-    signal_stop();
-
-    if (m_event_thread.joinable()) {
-        m_event_thread.join();
-    }
-    if (m_display) {
-        al_destroy_display(m_display);
-        m_display = nullptr;
-    }
-    if (m_event_queue) {
-        al_destroy_event_queue(m_event_queue);
-        m_event_queue = nullptr;
-    }
-
-    al_destroy_user_event_source(&m_custom_stop_event);
 }

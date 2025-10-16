@@ -26,10 +26,10 @@ private:
     ALLEGRO_DISPLAY* m_display = nullptr;
     ALLEGRO_EVENT_QUEUE* m_event_queue = nullptr;
     ALLEGRO_EVENT_SOURCE m_custom_stop_event;
-    std::jthread m_event_thread;
+    std::thread m_event_thread;
+    bool m_closed = false;
 
     void handle_events();
     void signal_stop();
-    void destroy();
 };
 
