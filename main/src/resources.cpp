@@ -4,9 +4,19 @@
 #include <allegro5/file.h>
 #include <allegro5/allegro_memfile.h>
 
+#include <lunaris/console/console.h>
+
 Resources::Resources() {
     m_embedded.push_back({"assets/EMprint-Regular.ttf", b::embed<"assets/EMprint-Regular.ttf">()});
+
+    Lunaris::cout << Lunaris::console::color::GREEN << "Resources initialized successfully!";
 }
+
+Resources::~Resources()
+{
+    Lunaris::cout << Lunaris::console::color::GRAY << "Resources destroyed.";
+}
+
 
 ALLEGRO_BITMAP* Resources::get_bitmap(const bitmap_identifier& name) {
     for (const auto& pair : m_bitmaps) {
@@ -14,7 +24,34 @@ ALLEGRO_BITMAP* Resources::get_bitmap(const bitmap_identifier& name) {
             return pair.second;
         }
     }
-    return nullptr;
+    
+    // Find the embedded file
+    auto it = std::find_if(m_embedded.begin(), m_embedded.end(),
+                           [&name](const auto& pair) { return pair.first == name; });
+    
+    if (it == m_embedded.end()) {
+        Lunaris::cout << Lunaris::console::color::YELLOW << "Warning: Bitmap '" << name << "' not found in embedded resources! Nullptr returned.";
+        return nullptr; // Bitmap not found
+    }
+
+    const auto& embedded_file = it->second;
+    ALLEGRO_FILE* file = al_open_memfile(
+        (void*)embedded_file.data(),
+        static_cast<int64_t>(embedded_file.size()),
+        "r"
+    );
+
+    // Create the bitmap from the embedded data
+    ALLEGRO_BITMAP* bitmap = al_load_bitmap_f(file, nullptr);
+    
+    if (bitmap) {
+        m_bitmaps.emplace_back(name, bitmap);
+    }
+
+    al_fclose(file);
+
+    Lunaris::cout << Lunaris::console::color::GREEN << "New bitmap resource '" << name << "' created successfully from embedded resources.";
+    return bitmap;
 }
 
 ALLEGRO_FONT* Resources::get_font(const font_identifier& identifier) {
@@ -31,6 +68,7 @@ ALLEGRO_FONT* Resources::get_font(const font_identifier& identifier) {
                            [&font_name](const auto& pair) { return pair.first == font_name; });
 
     if (it == m_embedded.end()) {
+        Lunaris::cout << Lunaris::console::color::YELLOW << "Warning: Font '" << font_name << "' not found in embedded resources! Nullptr returned.";
         return nullptr; // Font not found
     }
 
@@ -48,6 +86,8 @@ ALLEGRO_FONT* Resources::get_font(const font_identifier& identifier) {
     if (font) {
         m_fonts.emplace_back(identifier, font);
     }
+
+    Lunaris::cout << Lunaris::console::color::GREEN << "New font resource '" << font_name << "' of size " << font_size << " created successfully from embedded resources.";
 
     return font;
 }

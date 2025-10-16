@@ -4,9 +4,12 @@
 
 #include <thread>
 
+#include <config.h>
+#include <event_queue_wrapper.h>
+
 class Display {
 public:
-    Display(int width, int height, bool fullscreen, bool vsync);
+    Display(Config&);
     ~Display();
 
     void resize(int width, int height);
@@ -23,9 +26,9 @@ public:
     Display& operator=(const Display&) = delete;
     Display& operator=(Display&&) = delete;
 private:
+    Config& m_config;
     ALLEGRO_DISPLAY* m_display = nullptr;
-    ALLEGRO_EVENT_QUEUE* m_event_queue = nullptr;
-    ALLEGRO_EVENT_SOURCE m_custom_stop_event;
+    EventQueueWrapper m_event_queue_wrapper;
     std::thread m_event_thread;
     bool m_closed = false;
 

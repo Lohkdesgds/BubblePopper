@@ -63,12 +63,15 @@ Config::Config() {
         { "debug_mode", false },
         { "config_file", config_file.string() }
     };
+
+    Lunaris::cout << Lunaris::console::color::GREEN << "Configuration loaded successfully!";
 }
 
 Config::~Config() {
     std::ofstream file(m_volatile_config["config_file"].get<std::string>());
     if (file.is_open()) {
         file << m_persistent_config.dump(4);
+        Lunaris::cout << Lunaris::console::color::GRAY << "Configuration saved and destroyed.";
     }
     else {
         Lunaris::cout << Lunaris::console::color::YELLOW << "Warning: Failed to save config file on destruction!";
@@ -129,5 +132,7 @@ bool Config::is_debug_mode() const {
 
 
 Config::Config(const nlohmann::json& volatile_config, const nlohmann::json& persistent_config)
-    : m_volatile_config(volatile_config), m_persistent_config(persistent_config) {
+    : m_volatile_config(volatile_config), m_persistent_config(persistent_config)
+{
+    Lunaris::cout << Lunaris::console::color::YELLOW << "Warning: Config constructed with custom JSONs, this is not the default behavior!";
 }

@@ -4,33 +4,29 @@
 
 #include <lunaris/console/console.h>
 
-Display::Display(int width, int height, bool fullscreen, bool vsync) {
-    al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_RESIZABLE | (fullscreen ? ALLEGRO_FULLSCREEN_WINDOW : 0));
-    al_set_new_display_option(ALLEGRO_VSYNC, vsync ? 1 : 2, ALLEGRO_SUGGEST);
+Display::Display(Config& config)
+    : m_config(config)
+{
+    al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_RESIZABLE | (m_config.is_fullscreen() ? ALLEGRO_FULLSCREEN_WINDOW : 0));
+    al_set_new_display_option(ALLEGRO_VSYNC, m_config.is_vsync() ? 1 : 2, ALLEGRO_SUGGEST);
 
-    m_display = al_create_display(width, height);
+    m_display = al_create_display(m_config.get_screen_width(), m_config.get_screen_height());
 
     if (!m_display) {
-        Lunaris::cout << Lunaris::console::color::RED << "Failed to create display! Config: " << width << "x" << height << ", fullscreen: " << (fullscreen ? "yes" : "no") << ", vsync: " << (vsync ? "yes" : "no");
+        Lunaris::cout << Lunaris::console::color::RED << "Failed to create display! Config: "
+            << m_config.get_screen_width() << "x" << m_config.get_screen_height()
+            << (m_config.is_fullscreen() ? " fullscreen" : "") << (m_config.is_vsync() ? " vsync" : "");
         throw std::runtime_error("Failed to create display");
     }
 
-    m_event_queue = al_create_event_queue();
-    if (!m_event_queue) {
-        al_destroy_display(m_display);
-        m_display = nullptr;
-        Lunaris::cout << Lunaris::console::color::RED << "Failed to create event queue!";
-        throw std::runtime_error("Failed to create event queue");
-    }
-
-    al_register_event_source(m_event_queue, al_get_display_event_source(m_display));
-    al_register_event_source(m_event_queue, al_get_keyboard_event_source());
-
-    al_init_user_event_source(&m_custom_stop_event);
-    al_register_event_source(m_event_queue, &m_custom_stop_event);
+    m_event_queue_wrapper.register_source(al_get_display_event_source(m_display));
+    m_event_queue_wrapper.register_source(al_get_keyboard_event_source());
     
     m_event_thread = std::thread(&Display::handle_events, this);
 
+    Lunaris::cout << Lunaris::console::color::GREEN << "Display created successfully! "
+        << al_get_display_width(m_display) << "x" << al_get_display_height(m_display)
+        << (is_fullscreen() ? " fullscreen" : "") << (m_config.is_vsync() ? " vsync" : "");
 }
 
 Display::~Display() {
@@ -38,17 +34,13 @@ Display::~Display() {
 
     m_event_thread.join();
 
-    if (m_event_queue) {
-        al_destroy_event_queue(m_event_queue);
-        m_event_queue = nullptr;
-    }
-
-    al_destroy_user_event_source(&m_custom_stop_event);
-
     if (m_display) {
         al_destroy_display(m_display);
         m_display = nullptr;
+        m_closed = true;
     }
+
+    Lunaris::cout << Lunaris::console::color::GRAY << "Display destroyed.";
 }
 
 
@@ -90,13 +82,16 @@ Display::operator bool() const {
 void Display::handle_events() {
     ALLEGRO_EVENT event;
     while (*this) {
-        if (al_wait_for_event_timed(m_event_queue, &event, 0.1)) {
+        if (m_event_queue_wrapper.wait_timed(&event, 0.1)) {
             switch (event.type) {
             case ALLEGRO_EVENT_DISPLAY_CLOSE:
+                Lunaris::cout << Lunaris::console::color::YELLOW << "Display close event received. Closing display event handler.";
                 m_closed = true;
                 return;
             case ALLEGRO_EVENT_DISPLAY_RESIZE:
                 al_acknowledge_resize(m_display);
+                m_config.set_screen_width(al_get_display_width(m_display));
+                m_config.set_screen_height(al_get_display_height(m_display));
                 break;
             default:
                 break;
@@ -106,9 +101,9 @@ void Display::handle_events() {
 }
 
 void Display::signal_stop() {
-    if (!m_event_queue) return;
-
     ALLEGRO_EVENT ev;
     ev.user.type = ALLEGRO_EVENT_DISPLAY_CLOSE;
-    al_emit_user_event(&m_custom_stop_event, &ev, nullptr);
+
+    Lunaris::cout << Lunaris::console::color::GRAY << "Signaling display event thread to stop...";
+    m_event_queue_wrapper.push_event(ev);
 }

@@ -12,6 +12,7 @@ public:
     using font_identifier = std::tuple<std::string, int>; // name, size
 public:
     Resources();
+    ~Resources();
 
     ALLEGRO_BITMAP* get_bitmap(const bitmap_identifier& name);
     ALLEGRO_FONT* get_font(const font_identifier& name);

@@ -1,16 +1,21 @@
 #include <game.h>
 
+#include <lunaris/console/console.h>
+
 Game::Game()
     : m_resources()
     , m_config()
-    , m_display(std::make_unique<Display>(m_config.get_screen_width(), m_config.get_screen_height(), m_config.is_fullscreen(), m_config.is_vsync()))
+    , m_display(
+        std::make_unique<Display>(m_config)
+    )
 {
+    Lunaris::cout << Lunaris::console::color::GREEN << "Game initialized successfully!";
 }
 
 Game::~Game() {
-    m_config.set_screen_width(m_display->get_width());
-    m_config.set_screen_height(m_display->get_height());
     m_config.set_fullscreen(m_display->is_fullscreen());
+    
+    Lunaris::cout << Lunaris::console::color::GRAY << "Game destroyed.";
 }
 
 void Game::run() {
