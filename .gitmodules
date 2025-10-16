@@ -1,0 +1,6 @@
+[submodule "deps/json"]
+	path = deps/json
+	url = https://www.github.com/nlohmann/json
+[submodule "deps/lunaris/console"]
+	path = deps/lunaris/console
+	url = https://www.github.com/LunarisLib/Lunaris-Console

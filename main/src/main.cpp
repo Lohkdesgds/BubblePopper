@@ -1,52 +1,95 @@
-#include <iostream>
 #include <allegro5/allegro.h>
+#include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_ttf.h>
-#include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_audio.h>
 #include <allegro5/allegro_acodec.h>
-#include <allegro5/allegro_color.h>
 
-int main()
-{
-    al_init();
-    al_init_image_addon();
-    al_init_font_addon();
-    al_init_ttf_addon();
-    al_init_primitives_addon();
-    al_install_audio();
-    al_init_acodec_addon();
+#include <iostream>
 
-    std::cout << "Allegro initialized successfully!" << std::endl;
+#include <lunaris/console/console.h>
 
-    ALLEGRO_DISPLAY *display = al_create_display(800, 600);
-    if (!display) exit(EXIT_FAILURE);
-    al_set_window_title(display, "Bubble Popper - Loading...");
+#include <game.h>
 
-    ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
-    if (!event_queue) {
-        al_destroy_display(display);
-        exit(EXIT_FAILURE);
-    }
+using namespace Lunaris;
 
-    al_register_event_source(event_queue, al_get_display_event_source(display));
+int start_allegro();
 
-    al_set_window_title(display, "Bubble Popper");
-    al_clear_to_color(al_map_rgb(0, 0, 0));
-    al_flip_display();
+int main(int argc, char** argv) {
+    cout << "Loading Allegro...";
 
-    while(1) {
-        ALLEGRO_EVENT event;
-        al_wait_for_event(event_queue, &event);
-
-        if (event.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
-            break;
+    // If any of the args is "-debug", enable verbose build
+    for (int i = 1; i < argc; i++) {
+        if (std::string(argv[i]) == "-debug") {
+            al_set_config_value(al_get_system_config(), "system", "log", "allegro.log");
         }
     }
 
-    al_destroy_event_queue(event_queue);
-    al_destroy_display(display);
+    if (int err = start_allegro())
+        return err;
+
+    cout << console::color::GREEN << " Allegro loaded successfully! Starting game...";
+
+    const auto test = al_get_standard_path(ALLEGRO_USER_SETTINGS_PATH); // ALLEGRO_USER_DATA_PATH, ALLEGRO_USER_SETTINGS_PATH
+    cout << console::color::AQUA << al_path_cstr(test, '/');
+
+
+
+    Game game;
+    game.run();
+}
+
+int start_allegro() {
+    if (!al_init()) {
+        cout << console::color::RED << "Failed to initialize Allegro!";
+        return -1;
+    }
+    
+    if (!al_init_primitives_addon()) {
+        cout << console::color::RED << "Failed to initialize Allegro Primitives Addon!";
+        return -2;
+    }
+    
+    if (!al_init_image_addon()) {
+        cout << console::color::RED << "Failed to initialize Allegro Image Addon!";
+        return -3;
+    }
+
+    if (!al_init_font_addon()) {
+        cout << console::color::RED << "Failed to initialize Allegro Font Addon!";
+        return -4;
+    }
+    
+    if (!al_init_ttf_addon()) {
+        cout << console::color::RED << "Failed to initialize Allegro TTF Addon!";
+        return -5;
+    }
+
+    if (!al_install_audio()) {
+        cout << console::color::RED << "Failed to initialize Allegro Audio!";
+        return -6;
+    }
+
+    if (!al_init_acodec_addon()) {
+        cout << console::color::RED << "Failed to initialize Allegro Audio Codec Addon!";
+        return -7;
+    }
+
+    if (!al_reserve_samples(16)) {
+        cout << console::color::RED << "Failed to reserve Allegro Audio Samples!";
+        return -8;
+    }
+
+    if (!al_install_keyboard()) {
+        cout << console::color::RED << "Failed to initialize Allegro Keyboard!";
+        return -9;
+    }
+    
+    if (!al_install_mouse()) {
+        cout << console::color::RED << "Failed to initialize Allegro Mouse!";
+        return -10;
+    }
 
     return 0;
 }
