@@ -79,6 +79,33 @@ Display::operator bool() const {
     return !m_closed;
 }
 
+Display::operator ALLEGRO_EVENT_SOURCE*() const {
+    return m_display ? al_get_display_event_source(m_display) : nullptr;
+}
+
+void Display::flip() {
+    if (m_display) {
+        const auto now = std::chrono::high_resolution_clock::now();
+        m_frame_time_ms = std::chrono::duration<double, std::milli>(now - m_last_call).count();
+        m_last_call = now;
+        ++m_frames_counter;
+        if (std::chrono::duration<double, std::milli>(now - m_last_fps_calc).count() >= 1000.0) {
+            m_fps = std::exchange(m_frames_counter, 0);
+            m_last_fps_calc = now;
+        }
+
+        al_flip_display();
+    }
+}
+
+double Display::get_frame_time_ms() const {
+    return m_frame_time_ms;
+}
+
+unsigned Display::get_fps() const {
+    return m_fps;
+}
+
 void Display::handle_events() {
     ALLEGRO_EVENT event;
     while (*this) {

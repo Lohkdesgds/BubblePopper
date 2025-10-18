@@ -37,7 +37,13 @@ int main(int argc, char** argv) {
 
 
     Game game;
-    game.run();
+
+    const auto last_time = al_get_time();
+
+    while(game && al_get_time() - last_time < 120.0) {
+        while (game.think());
+        game.draw();
+    }
 }
 
 int start_allegro() {

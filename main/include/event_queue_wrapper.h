@@ -19,6 +19,7 @@ public:
 
     ALLEGRO_EVENT wait();
     bool wait_timed(ALLEGRO_EVENT*, double seconds);
+    bool get_event(ALLEGRO_EVENT*);
 
     void push_event(const ALLEGRO_EVENT&);
 

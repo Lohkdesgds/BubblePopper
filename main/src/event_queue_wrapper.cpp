@@ -58,6 +58,12 @@ bool EventQueueWrapper::wait_timed(ALLEGRO_EVENT* ev, double seconds) {
     return al_wait_for_event_timed(m_event_queue, ev, static_cast<float>(seconds));
 }
 
+bool EventQueueWrapper::get_event(ALLEGRO_EVENT* ev) {
+    if (!m_event_queue || !ev)
+        return false;
+    return al_get_next_event(m_event_queue, ev);
+}
+
 void EventQueueWrapper::push_event(const ALLEGRO_EVENT& ev) {
     if (!m_event_queue)
         return;

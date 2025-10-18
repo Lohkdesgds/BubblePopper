@@ -20,6 +20,12 @@ public:
     bool is_fullscreen() const;
 
     operator bool() const;
+    operator ALLEGRO_EVENT_SOURCE*() const;
+
+    void flip();
+
+    double get_frame_time_ms() const;
+    unsigned get_fps() const;
     
     Display(const Display&) = delete;
     Display(Display&&) = delete;
@@ -30,6 +36,10 @@ private:
     ALLEGRO_DISPLAY* m_display = nullptr;
     EventQueueWrapper m_event_queue_wrapper;
     std::thread m_event_thread;
+    std::chrono::high_resolution_clock::time_point m_last_call, m_last_fps_calc;
+    double m_frame_time_ms = 0.0;
+    unsigned m_frames_counter = 0;
+    unsigned m_fps = 0;
     bool m_closed = false;
 
     void handle_events();
