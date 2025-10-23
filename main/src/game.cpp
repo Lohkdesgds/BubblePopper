@@ -3,11 +3,12 @@
 #include <lunaris/console/console.h>
 
 Game::Game()
-    : m_resources()
-    , m_config()
-    , m_display(
+    : m_resources(),
+    m_config(),
+    m_display(
         std::make_unique<Display>(m_config)
-    )
+    ),
+    bubble(m_resources.get_bitmap("assets/bubble.png"), 1000, 1000)
 {
     m_event_queue_wrapper.register_source(*m_display);
     m_event_queue_wrapper.register_source(al_get_keyboard_event_source());
@@ -39,6 +40,19 @@ bool Game::think() {
             Lunaris::cout << Lunaris::console::color::YELLOW << "Toggled debug mode: "
                 << (m_config.is_debug_mode() ? "ON" : "OFF");
             break;
+        case ALLEGRO_KEY_W:
+            bubble.move_to(bubble.get_x(), bubble.get_y() - 200);
+            break;
+        case ALLEGRO_KEY_A:
+            bubble.move_to(bubble.get_x() - 200, bubble.get_y());
+            break;
+        case ALLEGRO_KEY_S:
+            bubble.move_to(bubble.get_x(), bubble.get_y() + 200);
+            break;
+        case ALLEGRO_KEY_D:
+            bubble.move_to(bubble.get_x() + 200, bubble.get_y());
+            break;
+
         }
         break;
     default:
@@ -61,22 +75,24 @@ void Game::draw() {
 
 
     if (m_config.is_debug_mode()) {
-        ALLEGRO_FONT* font = m_resources.get_font({"assets/EMprint-Regular.ttf", 14});
+        ALLEGRO_FONT* font = m_resources.get_font({"assets/EMprint-Regular.ttf", 64});
         al_draw_multiline_textf(
             font,
             al_map_rgb(255, 255, 255),
-            10, 10,
-            m_display->get_width() - 20,
-            20, 0,
-            "FPS: %u\nFrame time: %.6lf ms\nResolution: %dx%d\nFullscreen: %s\nVSync: %s",
+            10 - m_display->get_draw_width(), 10 - m_display->get_draw_height(),
+            m_display->get_draw_width() - 20,
+            56, 0,
+            "FPS: %u\nFrame time: %.6lf ms\nResolution: %dx%d\nDraw canvas: %.2fx%.2f zoom=%.5f\nFullscreen [F11]: %s\nVSync: %s",
             m_display->get_fps(),
             m_display->get_frame_time_ms(),
-            m_display->get_width(),
-            m_display->get_height(),
+            m_display->get_width(), m_display->get_height(),
+            m_display->get_draw_width(), m_display->get_draw_height(), m_display->get_draw_scale(),
             m_display->is_fullscreen() ? "Yes" : "No",
             m_config.is_vsync() ? "Yes" : "No"
         );
     }
+
+    bubble.draw(*m_display);
     
     m_display->flip();
 }

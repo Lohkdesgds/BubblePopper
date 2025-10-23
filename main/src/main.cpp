@@ -11,6 +11,7 @@
 #include <lunaris/console/console.h>
 
 #include <game.h>
+#include <bubble.h>
 
 using namespace Lunaris;
 

@@ -8,6 +8,7 @@
 
 Resources::Resources() {
     m_embedded.push_back({"assets/EMprint-Regular.ttf", b::embed<"assets/EMprint-Regular.ttf">()});
+    m_embedded.push_back({"assets/bubble.png", b::embed<"assets/bubble.png">()});
 
     Lunaris::cout << Lunaris::console::color::GREEN << "Resources initialized successfully!";
 }

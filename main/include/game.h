@@ -4,6 +4,8 @@
 
 #include <resources.h>
 #include <config.h>
+#include <bubble.h>
+
 #include <display.h>
 #include <event_queue_wrapper.h>
 
@@ -20,5 +22,6 @@ private:
     EventQueueWrapper m_event_queue_wrapper;
     Resources m_resources;
     Config m_config;
+    Bubble bubble;
     std::unique_ptr<Display> m_display;
 };

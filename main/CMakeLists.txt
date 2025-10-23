@@ -39,4 +39,4 @@ target_link_libraries(${PROJECT_NAME} LINK_PUBLIC
 
 # Embedded files
 b_embed(${PROJECT_NAME} "assets/EMprint-Regular.ttf")
-#b_embed(${PROJECT_NAME} "assets/misu.png")
+b_embed(${PROJECT_NAME} "assets/bubble.png")
