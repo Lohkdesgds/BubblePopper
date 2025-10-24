@@ -8,6 +8,7 @@ Display::Display(Config& config)
     : m_config(config)
 {
     al_set_new_display_flags(ALLEGRO_OPENGL | ALLEGRO_RESIZABLE | (m_config.is_fullscreen() ? ALLEGRO_FULLSCREEN_WINDOW : 0));
+    al_set_new_bitmap_flags(ALLEGRO_MAG_LINEAR | ALLEGRO_MIN_LINEAR);
     al_set_new_display_option(ALLEGRO_VSYNC, m_config.is_vsync() ? 1 : 2, ALLEGRO_SUGGEST);
 
     m_display = al_create_display(m_config.get_screen_width(), m_config.get_screen_height());
@@ -135,6 +136,13 @@ float Display::get_draw_scale() const
     return m_draw_screen_scale;
 }
 
+void Display::transform_mouse_coords(float& x, float& y)
+{
+    ALLEGRO_TRANSFORM cpy;
+    al_copy_transform(&cpy, &m_transform);
+    al_invert_transform(&cpy);
+    al_transform_coordinates(&cpy, &x, &y);
+}
 
 void Display::handle_events() {
     ALLEGRO_EVENT event;
@@ -184,17 +192,17 @@ void Display::update_matrix() {
     const auto new_h = al_get_display_height(m_display);
 
     const auto min_side = std::min(new_w, new_h);
-    const float scale = min_side * 1.0f / limits_min_side_calc;
+    const float scale = min_side * 1.0f / DEFAULT_SCREEN_SIDE_SIZE;
 
     al_build_transform(&m_transform, new_w / 2.0f, new_h / 2.0f, scale / 2.0f, scale / 2.0f, 0);
 
     m_draw_screen_x = new_h < new_w
-        ? (new_w * 1.0f / new_h) * static_cast<float>(limits_min_side_calc)
-        : static_cast<float>(limits_min_side_calc);
+        ? (new_w * 1.0f / new_h) * static_cast<float>(DEFAULT_SCREEN_SIDE_SIZE)
+        : static_cast<float>(DEFAULT_SCREEN_SIDE_SIZE);
 
     m_draw_screen_y = new_w < new_h
-        ? (new_h * 1.0f / new_w) * static_cast<float>(limits_min_side_calc)
-        : static_cast<float>(limits_min_side_calc);
+        ? (new_h * 1.0f / new_w) * static_cast<float>(DEFAULT_SCREEN_SIDE_SIZE)
+        : static_cast<float>(DEFAULT_SCREEN_SIDE_SIZE);
 
     m_draw_screen_scale = scale;
 

@@ -2,6 +2,8 @@
 
 #include <nlohmann/json.hpp>
 
+constexpr int DEFAULT_SCREEN_SIDE_SIZE = 1000;
+
 class Config {
 public:
     Config();

@@ -30,14 +30,14 @@ public:
     float get_draw_width() const;
     float get_draw_height() const;
     float get_draw_scale() const;
+
+    void transform_mouse_coords(float&, float&);
     
     Display(const Display&) = delete;
     Display(Display&&) = delete;
     Display& operator=(const Display&) = delete;
     Display& operator=(Display&&) = delete;
 private:
-    const int limits_min_side_calc = 1000; // min 1000 on small side.
-
     Config& m_config;
     ALLEGRO_DISPLAY* m_display = nullptr;
     ALLEGRO_TIMER* m_timer_fps = nullptr;
