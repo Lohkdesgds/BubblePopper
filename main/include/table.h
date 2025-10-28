@@ -22,6 +22,9 @@ public:
     //bool game_ended() const;
     //size_t balls_left() const;
 private:
+    void recursive_pop_at(const int, const int, const BubbleColors::Color&, std::vector<size_t>&);
+    void apply_gravity();
+
     using pBubble = std::unique_ptr<Bubble>;
 
     Resources& m_resources;

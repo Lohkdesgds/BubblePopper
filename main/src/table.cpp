@@ -34,9 +34,9 @@ void Table::random_fill()
 
     for(size_t y = 0; y < m_orig_y; ++y) {
         for(size_t x = 0; x < m_orig_x; ++x) {
-            const ALLEGRO_COLOR random_color = BubbleColors::get(
-                static_cast<BubbleColors::Color>(gen() % static_cast<size_t>(BubbleColors::Color::_SIZE))
-            );
+            const BubbleColors::Color random_color = 
+                static_cast<BubbleColors::Color>(gen() % static_cast<size_t>(BubbleColors::Color::_SIZE));
+
             const auto p = _calculate_real_idx(x, y, m_orig_x);
 
             new_bubbles[p] = std::unique_ptr<Bubble>(
@@ -67,7 +67,20 @@ void Table::mouse_click_at(const float x, const float y)
     const size_t real_pos = _calculate_real_idx(static_cast<size_t>(real_px), static_cast<size_t>(real_py), m_orig_x);
     std::unique_ptr<Bubble>& bubble = m_bubbles.load()[real_pos];
 
-    bubble.reset();
+    const BubbleColors::Color click_color = bubble->get_color();
+
+    std::vector<size_t> all_pos;
+
+    recursive_pop_at(real_px, real_py, click_color, all_pos);
+
+    if (all_pos.size() >= 3) {
+        for(const auto& i : all_pos) {
+            printf("D:%zu\n", i);
+            auto& it = m_bubbles.load()[i];
+            it.reset();
+        }
+        apply_gravity();
+    }
 
     return;
 }
@@ -77,5 +90,54 @@ void Table::draw_all(const Display& display)
     for(size_t p = 0; p < m_orig_x * m_orig_y; ++p) {
         if (auto& bubble = m_bubbles.load()[p])
             bubble->draw(display);
+    }
+}
+
+void Table::recursive_pop_at(const int x, const int y, const BubbleColors::Color& c, std::vector<size_t>& v)
+{
+    printf("VER %i %i\n", x, y);
+
+    if (x < 0 || static_cast<size_t>(x) >= m_orig_x ||
+        y < 0 || static_cast<size_t>(y) >= m_orig_y)
+        return; // cannot be valid
+
+    const size_t real_pos = _calculate_real_idx(static_cast<size_t>(x), static_cast<size_t>(y), m_orig_x);
+    for(const auto& quick : v) {
+        if (quick == real_pos) return;
+    }
+
+    std::unique_ptr<Bubble>& bubble = m_bubbles.load()[real_pos];
+
+    if (!bubble || bubble->get_color() != c) return;
+    
+    v.push_back(real_pos);
+
+    recursive_pop_at(x + 1, y, c, v);
+    recursive_pop_at(x - 1, y, c, v);
+    recursive_pop_at(x, y + 1, c, v);
+    recursive_pop_at(x, y - 1, c, v);    
+}
+
+void Table::apply_gravity()
+{
+    for (size_t cases = 1; cases > 0;) {
+        cases = 0;
+
+        for (size_t x = 0; x < m_orig_x; ++x) {
+            for (size_t y = 1; y < m_orig_y; ++y) {
+                const size_t p = _calculate_real_idx(static_cast<size_t>(x), static_cast<size_t>(y), m_orig_x);
+                const size_t p_up = _calculate_real_idx(static_cast<size_t>(x), static_cast<size_t>(y - 1), m_orig_x);
+                
+                auto& o = m_bubbles.load()[p];
+                auto& o_up = m_bubbles.load()[p_up];
+
+                if (o_up && !o) {
+                    o = std::move(o_up);
+                    o->move(0, m_y_factor);
+                    printf("%i %i -> %i %i\n", x, y - 1, x, y);
+                    ++cases;
+                }
+            }
+        }
     }
 }

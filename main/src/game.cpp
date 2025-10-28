@@ -44,19 +44,6 @@ bool Game::think() {
         case ALLEGRO_KEY_R:
             m_table.random_fill();
             break;
-        //case ALLEGRO_KEY_W:
-        //    bubble.move_to(bubble.get_x(), bubble.get_y() - 200);
-        //    break;
-        //case ALLEGRO_KEY_A:
-        //    bubble.move_to(bubble.get_x() - 200, bubble.get_y());
-        //    break;
-        //case ALLEGRO_KEY_S:
-        //    bubble.move_to(bubble.get_x(), bubble.get_y() + 200);
-        //    break;
-        //case ALLEGRO_KEY_D:
-        //    bubble.move_to(bubble.get_x() + 200, bubble.get_y());
-        //    break;
-
         }
         break;
     case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
