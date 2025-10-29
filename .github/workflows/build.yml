@@ -1,0 +1,72 @@
+name: Build BubblePopper
+
+on:
+  push:
+    branches: master
+
+jobs:
+    ubuntu_build:
+        name: Ubuntu build
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+                  fetch-depth: 1
+
+            - name: Setup
+              shell: bash
+              run: |
+                  sudo apt update
+                  sudo apt install -y xvfb libvorbis-dev libtheora-dev libwebp-dev libphysfs-dev libopusfile-dev libdumb1-dev libflac-dev libpulse-dev libgtk-3-dev pandoc libcurl4-openssl-dev libenet-dev pulseaudio libasound2-dev libopenal-dev libgl1-mesa-dev libglu-dev libopenmpt-dev
+
+            - name: Configure
+              shell: bash
+              run: |
+                  cmake -S . -B build -G Ninja -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_BUILD_TYPE=Release -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=build -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=build -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=build
+
+            - name: Build
+              shell: bash
+              run: |
+                  cmake --build build --config Release --parallel 4
+
+            - name: Upload build artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                name: BubblePopper-UBUNTU
+                path: |
+                    build/
+
+    windows_build:
+        name: Windows build
+        runs-on: windows-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+                  fetch-depth: 1
+
+            - uses: msys2/setup-msys2@v2
+            
+            - name: Setup
+              shell: msys2 {0}
+              run: |
+                  pacman --noconfirm -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake make mingw-w64-x86_64-physfs mingw-w64-x86_64-freetype mingw-w64-x86_64-libvorbis mingw-w64-x86_64-flac mingw-w64-x86_64-dumb mingw-w64-x86_64-libtheora mingw-w64-x86_64-libjpeg-turbo mingw-w64-x86_64-opusfile mingw-w64-x86_64-enet mingw-w64-x86_64-libwebp mingw-w64-x86_64-libopenmpt
+                  
+            - name: Configure
+              shell: msys2 {0}
+              run: |
+                  cmake -S . -B build -G Ninja -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_FIND_LIBRARY_SUFFIXES=".a" -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY=build -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=build -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=build
+            - name: Build
+              shell: msys2 {0}
+              run: |
+                  cmake --build build --config Release --parallel 4
+
+            - name: Upload build artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                name: BubblePopper-WINDOWS
+                path: |
+                    build/
