@@ -1,3 +1,5 @@
+#include <random>
+
 #include <game.h>
 
 #include <lunaris/console/console.h>
@@ -42,7 +44,13 @@ bool Game::think() {
                 << (m_config.is_debug_mode() ? "ON" : "OFF");
             break;
         case ALLEGRO_KEY_R:
-            m_table.random_fill();
+            {
+                std::random_device rd;
+                std::mt19937 gen(rd());
+
+                const size_t rnd = gen() % static_cast<size_t>(BubbleColors::Color::_SIZE);
+                m_table.random_fill(rnd);
+            }
             break;
         }
         break;
@@ -68,13 +76,13 @@ bool Game::think() {
 void Game::draw() {
     // Main game loop would go here
 
-    ALLEGRO_COLOR rainbow_by_time = al_map_rgb(
+    /*ALLEGRO_COLOR rainbow_by_time = al_map_rgb(
         120 + cos(al_get_time() * 2) * 100,
         120 + cos(al_get_time() * 1.3 + 2) * 100,
         120 + cos(al_get_time() * 2.7 + 4) * 100
-    );
+    );*/
 
-    al_clear_to_color(rainbow_by_time);
+    al_clear_to_color(al_map_rgb(25,25,25));
 
     //bubble.draw(*m_display);
     m_table.draw_all(*m_display);

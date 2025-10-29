@@ -10,10 +10,10 @@ Bubble::Bubble(ALLEGRO_BITMAP* texture, const int pos_x, const int pos_y, const 
 {
 }
 
-void Bubble::move(const int add_x, const int add_y)
+void Bubble::move_to(const int new_x, const int new_y)
 {
-    m_grid_x += add_x;
-    m_grid_y += add_y;
+    m_grid_x = new_x;
+    m_grid_y = new_y;
 }
 
 int Bubble::get_x() const
@@ -35,8 +35,20 @@ void Bubble::draw(const Display& display)
 {
     const auto delta_secs = std::min(display.get_frame_time_ms() / 1000.0, 0.05) * 20.0;
     
-    m_draw_x = static_cast<float>(m_draw_x * (1.0 - delta_secs) + m_grid_x * 1.0f * (delta_secs));
-    m_draw_y = static_cast<float>(m_draw_y * (1.0 - delta_secs) + m_grid_y * 1.0f * (delta_secs));
+    constexpr float stiffness = 2.0f;
+    constexpr float damping = 0.8f;
+
+    float dx = m_grid_x - m_draw_x;
+    float dy = m_grid_y - m_draw_y;
+
+    m_vx = m_vx * damping + dx * stiffness * delta_secs;
+    m_vy = m_vy * damping + dy * stiffness * delta_secs;
+
+    m_draw_x += m_vx * delta_secs;
+    m_draw_y += m_vy * delta_secs;
+
+    if (fabs(dx) < 1e-2f && fabs(m_vx) < 1e-5f) m_draw_x = m_grid_x;
+    if (fabs(dy) < 1e-2f && fabs(m_vy) < 1e-5f) m_draw_y = m_grid_y;
 
     al_draw_tinted_scaled_rotated_bitmap(m_texture, BubbleColors::_get(m_tint),
         m_texture_size_x / 2, m_texture_size_y / 2,

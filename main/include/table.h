@@ -13,7 +13,7 @@ class Table {
 public:
     Table(Resources&, const size_t, const size_t);
 
-    void random_fill();
+    void random_fill(const size_t level = 3);
 
     void mouse_click_at(const float, const float);
 

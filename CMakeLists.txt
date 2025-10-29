@@ -11,9 +11,6 @@ file(GLOB_RECURSE DEPS_SRCS "deps/**/*.h")
 set(DEPS_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/deps
     ${CMAKE_CURRENT_SOURCE_DIR}/deps/json/single_include
-    #${CMAKE_CURRENT_SOURCE_DIR}/deps/battery-embed/include
-    #${CMAKE_CURRENT_SOURCE_DIR}/deps/battery-embed/src
-    #${CMAKE_CURRENT_SOURCE_DIR}/deps/SFML/include
 )
 set(B_PRODUCTION_MODE ON)
 

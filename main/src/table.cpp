@@ -4,6 +4,7 @@
 #include <cmath>
 
 constexpr size_t _calculate_real_idx(const size_t x, const size_t y, const size_t orig_x) { return x + orig_x * y; }
+constexpr float _calculate_real_coord(const size_t i, const float factor) { return (i + 0.5f) * factor - static_cast<float>(DEFAULT_SCREEN_SIDE_SIZE); }
 
 
 Bubble* Table::get_at(const size_t x, const size_t y)
@@ -22,28 +23,31 @@ Table::Table(Resources& resources, const size_t x, const size_t y)
             std::max(x, y) * static_cast<float>(al_get_bitmap_width(m_common_bmp))
         ))
 {
-    random_fill();
+    random_fill(2);
 }
 
-void Table::random_fill()
+void Table::random_fill(const size_t level)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
+
+    const size_t real_level = level > (static_cast<size_t>(BubbleColors::Color::_SIZE) - 1)
+        ? static_cast<size_t>(BubbleColors::Color::_SIZE) : (level < 2 ? 2 : (level + 1));
 
     std::shared_ptr<pBubble[]> new_bubbles = std::shared_ptr<pBubble[]>(new pBubble[m_orig_x * m_orig_y]);
 
     for(size_t y = 0; y < m_orig_y; ++y) {
         for(size_t x = 0; x < m_orig_x; ++x) {
             const BubbleColors::Color random_color = 
-                static_cast<BubbleColors::Color>(gen() % static_cast<size_t>(BubbleColors::Color::_SIZE));
+                static_cast<BubbleColors::Color>(gen() % real_level);
 
             const auto p = _calculate_real_idx(x, y, m_orig_x);
 
             new_bubbles[p] = std::unique_ptr<Bubble>(
                 new Bubble(
                     m_common_bmp,
-                    (x + 0.5f) * m_x_factor - static_cast<float>(DEFAULT_SCREEN_SIDE_SIZE),
-                    (y + 0.5f) * m_y_factor - static_cast<float>(DEFAULT_SCREEN_SIDE_SIZE),
+                    _calculate_real_coord(x, m_x_factor),
+                    _calculate_real_coord(y, m_y_factor),
                     m_scale_res,
                     random_color
                 )
@@ -67,6 +71,8 @@ void Table::mouse_click_at(const float x, const float y)
     const size_t real_pos = _calculate_real_idx(static_cast<size_t>(real_px), static_cast<size_t>(real_py), m_orig_x);
     std::unique_ptr<Bubble>& bubble = m_bubbles.load()[real_pos];
 
+    if (!bubble) return;
+
     const BubbleColors::Color click_color = bubble->get_color();
 
     std::vector<size_t> all_pos;
@@ -75,7 +81,7 @@ void Table::mouse_click_at(const float x, const float y)
 
     if (all_pos.size() >= 3) {
         for(const auto& i : all_pos) {
-            printf("D:%zu\n", i);
+            //printf("D:%zu\n", i);
             auto& it = m_bubbles.load()[i];
             it.reset();
         }
@@ -95,7 +101,7 @@ void Table::draw_all(const Display& display)
 
 void Table::recursive_pop_at(const int x, const int y, const BubbleColors::Color& c, std::vector<size_t>& v)
 {
-    printf("VER %i %i\n", x, y);
+    //printf("VER %i %i\n", x, y);
 
     if (x < 0 || static_cast<size_t>(x) >= m_orig_x ||
         y < 0 || static_cast<size_t>(y) >= m_orig_y)
@@ -133,9 +139,43 @@ void Table::apply_gravity()
 
                 if (o_up && !o) {
                     o = std::move(o_up);
-                    o->move(0, m_y_factor);
-                    printf("%i %i -> %i %i\n", x, y - 1, x, y);
+                    o->move_to(
+                        _calculate_real_coord(x, m_x_factor),
+                        _calculate_real_coord(y, m_y_factor)
+                    );
+                    //printf("x %i %i -> %i %i\n", x, y - 1, x, y);
                     ++cases;
+                }
+            }
+        }
+    }
+
+    for (size_t cases = 1; cases > 0;) {
+        cases = 0;
+        for (size_t x = 0; x < m_orig_x - 1; ++x) {
+            size_t score = 0;
+            for (size_t y = 0; y < m_orig_y; ++y) {
+                const size_t p = _calculate_real_idx(static_cast<size_t>(x), static_cast<size_t>(y), m_orig_x);
+                if (!m_bubbles.load()[p])
+                    ++score;
+            }
+            if (score == m_orig_y) {
+                for (size_t y = 0; y < m_orig_y; ++y) {
+                    const size_t p = _calculate_real_idx(static_cast<size_t>(x), static_cast<size_t>(y), m_orig_x);
+                    const size_t p_r = _calculate_real_idx(static_cast<size_t>(x + 1), static_cast<size_t>(y), m_orig_x);
+
+                    auto& o = m_bubbles.load()[p];
+                    auto& o_r = m_bubbles.load()[p_r];
+
+                    if (o_r) {
+                        o = std::move(o_r);
+                        o->move_to(
+                            _calculate_real_coord(x, m_x_factor),
+                            _calculate_real_coord(y, m_y_factor)
+                        );
+                        //printf("| %i %i -> %i %i\n", x + 1, y, x, y);
+                        ++cases;
+                    }
                 }
             }
         }
